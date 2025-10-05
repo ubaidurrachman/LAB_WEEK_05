@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
 
     private val retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl("https://api.thecatapi.com/v1/")
+            .baseUrl("https://api.thecatapi.com/v1/") // ✅ Diperbaiki: hapus spasi di akhir!
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
     }
@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         call.enqueue(object : Callback<List<ImageData>> {
             override fun onFailure(call: Call<List<ImageData>>, t: Throwable) {
                 Log.e(MAIN_ACTIVITY, "Failed to get response", t)
+                apiResponseView.text = "Error: ${t.message}"
             }
 
             override fun onResponse(
@@ -56,16 +57,26 @@ class MainActivity : AppCompatActivity() {
                 response: Response<List<ImageData>>
             ) {
                 if (response.isSuccessful) {
-                    val image = response.body()
-                    val firstImageUrl = image?.firstOrNull()?.imageUrl.orEmpty()
-                    if (firstImageUrl.isNotBlank()) {
-                        imageLoader.loadImage(firstImageUrl, imageResultView)
+                    val imageList = response.body()
+                    val firstImage = imageList?.firstOrNull()
+
+                    // ✅ TUGAS AKHIR: TAMPILKAN BREED, BUKAN URL!
+                    val breedName = firstImage?.breeds?.firstOrNull()?.name ?: "Unknown"
+                    apiResponseView.text = "Breed: $breedName"
+
+                    // Tetap tampilkan gambarnya
+                    val imageUrl = firstImage?.imageUrl.orEmpty()
+                    if (imageUrl.isNotBlank()) {
+                        imageLoader.loadImage(imageUrl, imageResultView)
                     } else {
                         Log.d(MAIN_ACTIVITY, "Missing image URL")
                     }
-                    apiResponseView.text = getString(R.string.image_placeholder, firstImageUrl)
                 } else {
-                    Log.e(MAIN_ACTIVITY, "Failed to get response\n${response.errorBody()?.string().orEmpty()}")
+                    Log.e(
+                        MAIN_ACTIVITY,
+                        "API Error: ${response.errorBody()?.string().orEmpty()}"
+                    )
+                    apiResponseView.text = "Failed to load cat"
                 }
             }
         })
