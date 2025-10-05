@@ -2,6 +2,7 @@ package com.ubai.lab_week_05
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.ubai.lab_week_05.api.CatApiService
@@ -29,6 +30,14 @@ class MainActivity : AppCompatActivity() {
         findViewById(R.id.api_response)
     }
 
+    private val imageResultView: ImageView by lazy {
+        findViewById(R.id.image_result)
+    }
+
+    private val imageLoader: ImageLoader by lazy {
+        GlideLoader(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -48,7 +57,12 @@ class MainActivity : AppCompatActivity() {
             ) {
                 if (response.isSuccessful) {
                     val image = response.body()
-                    val firstImageUrl = image?.firstOrNull()?.imageUrl ?: "No URL"
+                    val firstImageUrl = image?.firstOrNull()?.imageUrl.orEmpty()
+                    if (firstImageUrl.isNotBlank()) {
+                        imageLoader.loadImage(firstImageUrl, imageResultView)
+                    } else {
+                        Log.d(MAIN_ACTIVITY, "Missing image URL")
+                    }
                     apiResponseView.text = getString(R.string.image_placeholder, firstImageUrl)
                 } else {
                     Log.e(MAIN_ACTIVITY, "Failed to get response\n${response.errorBody()?.string().orEmpty()}")
